@@ -2,6 +2,21 @@
 
 Cuộc thi 120 phút tại lớp. Track 3, VinUniversity.
 
+## Thông tin bài làm
+
+| Thông tin | Nội dung |
+|---|---|
+| Họ và tên | **Trần Việt Trường** |
+| Mã số sinh viên | **2A202601467** |
+| GitHub | [Truongtv0107](https://github.com/Truongtv0107) |
+| Repository | `DAY16_2A202601467_TranVietTruong` |
+| Kết quả practice | **81.71/100** với đầy đủ 5 middleware layer |
+| Kiểm thử | **753 tests passed** |
+
+> Bài làm tập trung vào khả năng tổng quát trên hidden briefs: không hard-code
+> `brief_id`, `doc_id`, đáp án hoặc `Doc.tags`. Chi tiết thiết kế và kết quả kiểm
+> thử được trình bày trong [`BAO_CAO_CA_NHAN.md`](BAO_CAO_CA_NHAN.md).
+
 ---
 
 ## 1. Bạn đang xây cái gì

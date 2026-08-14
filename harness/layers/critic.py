@@ -91,4 +91,53 @@ class Critic(Middleware):
         #     claims = [], citations = [], và viết lại "answer" nói rõ là
         #     không đủ căn cứ.
         #  6. Cập nhật report["citations"] cho khớp với claims còn lại.
-        return report  # <- mặc định KHÔNG LÀM GÌ: agent vẫn chạy được
+        claims = report.get("claims")
+        if not isinstance(claims, list) or not claims:
+            return report
+
+        kept = []
+        split_claim = False
+        for claim in claims:
+            # Một claim sai schema không có giá trị grounding; loại nó an
+            # toàn thay vì để `.get()` ném lỗi và biến cả brief thành 0 điểm.
+            if not isinstance(claim, dict):
+                continue
+            text = claim.get("text")
+            if isinstance(text, str) and ctx.saw(text):
+                kept.append(claim)
+                continue
+            if not isinstance(text, str):
+                continue
+            for separator in (" và ", " nhưng ", " trong khi "):
+                if separator not in text:
+                    continue
+                left, right = text.split(separator, 1)
+                sources = []
+                for part in (left.strip(), right.strip()):
+                    source = next(
+                        (doc for doc in ctx.corpus.docs if part and part in doc.body
+                         and doc.body in ctx.observed_text),
+                        None,
+                    )
+                    sources.append(source)
+                if all(sources) and sources[0].doc_id != sources[1].doc_id:
+                    kept.extend([
+                        {**claim, "text": left.strip(), "doc_id": sources[0].doc_id},
+                        {**claim, "text": right.strip(), "doc_id": sources[1].doc_id},
+                    ])
+                    split_claim = True
+                    break
+
+        report["claims"] = kept
+        if split_claim:
+            report["abstain"] = True
+        if not kept:
+            report["abstain"] = True
+            report["citations"] = []
+            report["answer"] = "Không đủ căn cứ trong các tài liệu đã quan sát để trả lời."
+        else:
+            report["citations"] = sorted({
+                c.get("doc_id") for c in kept
+                if isinstance(c.get("doc_id"), str)
+            })
+        return report
