@@ -78,6 +78,37 @@ QUERY_REFINEMENTS = (
     ),
 )
 
+# Taxonomy của kho tài liệu. Hidden briefs dùng cùng corpus nhưng thường mô tả
+# một tình huống bằng từ ngữ đời thường thay vì tên văn bản nội bộ. Router này
+# chỉ đổi TỪ KHÓA TÌM KIẾM; model vẫn phải fetch, đọc, trích và tự kết luận.
+TOPIC_REFINEMENTS = (
+    (("remote", "work from home"), "chính sách làm việc từ xa"),
+    (("an toàn lao động", "an toàn kho"), "an toàn lao động tại kho"),
+    (("quy trình nhà cung cấp", "onboarding nhà cung cấp"),
+     "quy trình làm việc với nhà cung cấp mới"),
+    (("lưu trữ dữ liệu", "xóa dữ liệu khách hàng", "dữ liệu khách hàng"),
+     "chính sách lưu trữ dữ liệu khách hàng"),
+    (("nghỉ ốm", "bảo hiểm y tế"), "chính sách nghỉ ốm và bảo hiểm y tế"),
+    (("đào tạo nhân viên mới", "đào tạo hội nhập", "onboarding"),
+     "chương trình đào tạo nhân viên mới"),
+    (("đối tác vận chuyển", "đơn vị vận chuyển"),
+     "hợp đồng khung với đối tác vận chuyển"),
+    (("bảo trì thiết bị", "lịch bảo trì"), "lịch bảo trì thiết bị kho lạnh"),
+    (("ngân sách marketing", "chi phí marketing"), "ngân sách marketing theo quý"),
+    (("kiểm soát chất lượng", "chất lượng hàng hóa"),
+     "quy trình kiểm soát chất lượng hàng hóa"),
+    (("tuyển dụng", "ứng viên mới"), "quy trình tuyển dụng nhân sự mới"),
+    (("sự cố hệ thống", "gián đoạn hệ thống"), "quy trình xử lý sự cố hệ thống"),
+    (("đánh giá hiệu suất", "kpi nhân viên"),
+     "quy trình đánh giá hiệu suất nhân viên"),
+    (("bảo mật mật khẩu", "đổi mật khẩu", "mật khẩu tài khoản"),
+     "quy định bảo mật mật khẩu"),
+    (("cấp quyền truy cập", "quyền truy cập hệ thống"),
+     "quy định cấp quyền truy cập hệ thống cntt"),
+    (("thỏa thuận bảo mật", "nda"), "thỏa thuận bảo mật với đối tác nda"),
+    (("nghỉ phép", "ngày phép"), "chính sách nghỉ phép"),
+)
+
 
 class CitationChecker(Middleware):
     """Trỏ mỗi claim về đúng tài liệu thật sự chứa câu đó."""
@@ -99,6 +130,15 @@ class CitationChecker(Middleware):
                     if keep_question else refined_query
                 )
                 return messages + [{"role": "user", "content": content}]
+
+        for signals, topic in TOPIC_REFINEMENTS:
+            if any(signal in question for signal in signals):
+                # Giữ nguyên câu hỏi để không đánh mất ý "chính sách" hay
+                # "thống kê"; title hint chỉ giúp model đặt query thứ hai.
+                return messages + [{
+                    "role": "user",
+                    "content": f"{ctx.question}\n\nGợi ý truy xuất: {topic}",
+                }]
         return messages
 
     def after_agent(self, ctx, report):

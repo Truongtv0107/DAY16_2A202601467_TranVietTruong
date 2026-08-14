@@ -97,6 +97,19 @@ class Critic(Middleware):
 
         kept = []
         split_claim = False
+
+        def observed_source(part):
+            if not part:
+                return None
+            return next(
+                (
+                    doc for doc in ctx.corpus.docs
+                    if doc.body in ctx.observed_text
+                    and any(part in line for line in doc.body.splitlines())
+                ),
+                None,
+            )
+
         for claim in claims:
             # Một claim sai schema không có giá trị grounding; loại nó an
             # toàn thay vì để `.get()` ném lỗi và biến cả brief thành 0 điểm.
@@ -108,24 +121,29 @@ class Critic(Middleware):
                 continue
             if not isinstance(text, str):
                 continue
+            recovered = False
             for separator in (" và ", " nhưng ", " trong khi "):
-                if separator not in text:
-                    continue
-                left, right = text.split(separator, 1)
-                sources = []
-                for part in (left.strip(), right.strip()):
-                    source = next(
-                        (doc for doc in ctx.corpus.docs if part and part in doc.body
-                         and doc.body in ctx.observed_text),
-                        None,
-                    )
-                    sources.append(source)
-                if all(sources) and sources[0].doc_id != sources[1].doc_id:
+                cursor = 0
+                while (split_at := text.find(separator, cursor)) >= 0:
+                    left = text[:split_at].strip()
+                    right = text[split_at + len(separator):].strip()
+                    sources = (observed_source(left), observed_source(right))
+                    if not (
+                        all(sources) and sources[0].doc_id != sources[1].doc_id
+                    ):
+                        # Hai vế có thể tạo thành "... và và ...": dấu
+                        # cách cuối của lần khớp trước cũng là đầu của lần
+                        # khớp kế tiếp, nên phải cho phép match chồng lấn.
+                        cursor = split_at + 1
+                        continue
                     kept.extend([
-                        {**claim, "text": left.strip(), "doc_id": sources[0].doc_id},
-                        {**claim, "text": right.strip(), "doc_id": sources[1].doc_id},
+                        {**claim, "text": left, "doc_id": sources[0].doc_id},
+                        {**claim, "text": right, "doc_id": sources[1].doc_id},
                     ])
                     split_claim = True
+                    recovered = True
+                    break
+                if recovered:
                     break
 
         report["claims"] = kept
