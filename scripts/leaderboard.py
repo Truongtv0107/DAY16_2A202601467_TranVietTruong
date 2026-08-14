@@ -181,7 +181,9 @@ def main(argv=None) -> int:
     rows = []
     for rank, entry in enumerate(ranked, start=1):
         total = mean_total(entry)
-        gap = total - baseline
+        # GAP được hiển thị cạnh hai số đã làm tròn 2 chữ số, nên tính từ
+        # chính hai số đó để bảng và JSON nhất quán (91.69 - 24.27 = 67.42).
+        gap = round(total, 2) - round(baseline, 2)
         label, mark = verdict(gap)
         rows.append(
             {

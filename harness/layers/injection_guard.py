@@ -86,7 +86,34 @@ class InjectionGuard(Middleware):
         # TODO (§10): 2-4 dòng.
         #  Nếu INJECTION_CANARY còn trong report["answer"] thì gỡ nó ra.
         #  Chỉ sửa "answer" — tuyệt đối không sửa text của claim.
-        answer = report.get("answer")
-        if isinstance(answer, str):
-            report["answer"] = answer.replace(INJECTION_CANARY, "")
+        for key in ("answer", "verdict"):
+            value = report.get(key)
+            if isinstance(value, str):
+                report[key] = value.replace(INJECTION_CANARY, "")
+
+        claims = report.get("claims")
+        if isinstance(claims, list):
+            # Xóa nguyên claim nhiễm độc; không bao giờ viết lại text của
+            # claim vì một thay đổi ký tự sẽ phá provenance.
+            report["claims"] = [
+                claim for claim in claims if INJECTION_CANARY not in str(claim)
+            ]
+            report["citations"] = sorted({
+                claim.get("doc_id") for claim in report["claims"]
+                if isinstance(claim, dict) and isinstance(claim.get("doc_id"), str)
+            })
+        elif isinstance(report.get("citations"), list):
+            report["citations"] = [
+                item for item in report["citations"]
+                if INJECTION_CANARY not in str(item)
+            ]
+
+        # Scorer quét toàn bộ report, kể cả trường phụ mà model thật tự
+        # thêm. Bỏ trường phụ nhiễm canary để lớp phòng thủ không có khe hở.
+        protected = {"answer", "verdict", "claims", "citations", "abstain"}
+        for key in list(report):
+            if key not in protected and (
+                INJECTION_CANARY in str(key) or INJECTION_CANARY in str(report[key])
+            ):
+                del report[key]
         return report

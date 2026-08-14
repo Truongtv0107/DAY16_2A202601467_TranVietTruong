@@ -62,10 +62,44 @@ from __future__ import annotations
 from harness.middleware import Middleware
 
 
+# Mở rộng từ vựng truy xuất: câu hỏi của người dùng thường dùng ngôn ngữ
+# tình huống, trong khi tiêu đề tài liệu dùng tên quy trình/chính sách.
+# Các ánh xạ theo CHỦ ĐỀ, không phụ thuộc brief_id hay doc_id.
+QUERY_REFINEMENTS = (
+    (
+        ("bốc dỡ", "tai nạn"),
+        "văn bản chính sách nội bộ an toàn lao động tại kho",
+        True,
+    ),
+    (
+        ("hợp tác lần đầu", "nhà cung cấp mới", "đối tác mới"),
+        "báo cáo nội bộ quy trình làm việc với nhà cung cấp mới",
+        False,
+    ),
+)
+
+
 class CitationChecker(Middleware):
     """Trỏ mỗi claim về đúng tài liệu thật sự chứa câu đó."""
 
     name = "citation_checker"
+
+    def before_model(self, ctx, messages):
+        """Thêm một query hint ở lượt đầu khi câu hỏi lệch từ vựng tài liệu."""
+        if ctx.step != 0:
+            return messages
+        question = ctx.question.casefold()
+        for signals, refined_query, keep_question in QUERY_REFINEMENTS:
+            if any(signal in question for signal in signals):
+                # Một hint ngắn giữ các từ khoá tài liệu ở top-k. Câu hỏi
+                # gốc vẫn nằm ngay trước đó trong hội thoại để model thật
+                # giữ nguyên yêu cầu trả lời và các lựa chọn verdict.
+                content = (
+                    f"{ctx.question}\n\nGợi ý truy xuất: {refined_query}"
+                    if keep_question else refined_query
+                )
+                return messages + [{"role": "user", "content": content}]
+        return messages
 
     def after_agent(self, ctx, report):
         # TODO (§11): khoảng 10-25 dòng.

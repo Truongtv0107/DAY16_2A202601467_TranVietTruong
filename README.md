@@ -10,7 +10,7 @@ Cuộc thi 120 phút tại lớp. Track 3, VinUniversity.
 | Mã số sinh viên | **2A202601467** |
 | GitHub | [Truongtv0107](https://github.com/Truongtv0107) |
 | Repository | `DAY16_2A202601467_TranVietTruong` |
-| Kết quả practice | **81.71/100** với đầy đủ 5 middleware layer |
+| Kết quả practice | **91.69/100**, GAP **+67.42** với đầy đủ 5 middleware layer |
 | Kiểm thử | **753 tests passed** |
 
 > Bài làm tập trung vào khả năng tổng quát trên hidden briefs: không hard-code

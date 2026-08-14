@@ -48,12 +48,15 @@ hard-code dữ liệu của bộ practice để giải pháp vẫn hoạt độn
 - Kiểm tra claim theo từng dòng tài liệu, đúng với quy tắc của scorer.
 - Chỉ gắn lại citation sang tài liệu đã được agent fetch và quan sát đầy đủ.
 - Chỉ thay đổi `doc_id`, tuyệt đối không viết lại nội dung claim.
+- Mở rộng truy vấn theo chủ đề khi ngôn ngữ tình huống khác tên chính thức của
+  tài liệu, không phụ thuộc `brief_id` hoặc `doc_id`.
 
 ## Kết quả kiểm thử
 
 ```text
 753 passed
-Practice score: 81.71 / 100
+Practice score: 91.69 / 100
+GAP against baseline: +67.42
 ```
 
 Kết quả practice theo brief:
@@ -67,9 +70,9 @@ Kết quả practice theo brief:
 | Chỉ số kho lạnh | 85.04 |
 | Cảm biến mất kết nối | 100.00 |
 | Chi phí công tác | 100.00 |
-| An toàn bốc dỡ | 40.15 |
-| Số vụ với đối tác mới | 40.15 |
-| **Trung bình** | **81.71** |
+| An toàn bốc dỡ | 100.00 |
+| Số vụ với đối tác mới | 70.07 |
+| **Trung bình** | **91.69** |
 
 Hai brief cuối yêu cầu truy xuất sâu và được thiết kế để đánh giá khả năng re-query
 của model thật. Bài làm giữ middleware tổng quát thay vì chèn đáp án practice vào code.
